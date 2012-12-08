@@ -32,7 +32,7 @@ setup(
         "djangorestframework==0.2.3",
         "python-shout==0.2",
         "python-daemon==1.6",
-        "pyinotify==0.9.1",
+        "watchdog>=0.6.0",
     ],
     include_package_data=True,
     scripts=glob.glob("bin/*"),

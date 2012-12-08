@@ -2,21 +2,24 @@
 
 from django.core.management.base import BaseCommand
 from optparse import make_option
-import os, sys
+import os
+import sys
 import daemon
 import daemon.pidfile
 from signal import SIGTSTP
-import pyinotify
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 from jukebox_core.management.commands.jukebox_index import FileIndexer
 
 
-class EventHandler(pyinotify.ProcessEvent):
+class EventHandler(FileSystemEventHandler):
     def __init__(self):
         self.indexer = FileIndexer()
 
-    def process_IN_CREATE(self, event):
-        if event.pathname.endswith(".mp3"):
-            self.indexer.index(event.pathname)
+    def on_created(self, event):
+        if not event.is_directory:
+            if os.path.splitext(event.src_path)[-1].lower() == ".mp3":
+                self.indexer.index(event.src_path)
 
 
 class Command(BaseCommand):
@@ -24,19 +27,16 @@ class Command(BaseCommand):
         make_option("--path",
             action="store",
             dest="path",
-            help="Music library path to watch"
-        ),
+            help="Music library path to watch"),
         make_option("--start",
             action="store_true",
             dest="start",
-            help="Start watching directory for changes"
-        ),
+            help="Start watching directory for changes"),
         make_option("--stop",
             action="store_true",
             dest="stop",
-            help="Stop watching directory for changes"
-        ),
-    )
+            help="Stop watching directory for changes"),
+        )
 
     def handle(self, *args, **options):
         if options["path"] is None:
@@ -86,16 +86,13 @@ class Command(BaseCommand):
 
         with self.daemon:
             # create watchmanager, eventhandler and notifier
-            wm = pyinotify.WatchManager()
             handler = EventHandler()
-            self.notifier = pyinotify.Notifier(wm, handler)
 
-            # add watch
-            mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE
-            wm.add_watch(path, mask, rec=True)
-            self.notifier.loop()
+            self.monitor = Observer()
+            self.monitor.schedule(handler, path, recursive=True)
+            self.monitor.run()
 
     def shutdown(self, signal, action):
-        self.notifier.stop()
+        self.monitor.stop()
         self.daemon.close()
         sys.exit(0)
