@@ -9,7 +9,7 @@ import daemon.pidfile
 from signal import SIGTSTP
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from jukebox_core.management.commands.jukebox_index import FileIndexer
+from jukebox.jukebox_core.management.commands.jukebox_index import FileIndexer
 
 
 class EventHandler(FileSystemEventHandler):
@@ -21,22 +21,30 @@ class EventHandler(FileSystemEventHandler):
             if os.path.splitext(event.src_path)[-1].lower() == ".mp3":
                 self.indexer.index(event.src_path)
 
+    def on_modified(self, event):
+        self.on_created(event)
+
 
 class Command(BaseCommand):
+    monitor = None
+
     option_list = BaseCommand.option_list + (
         make_option("--path",
             action="store",
             dest="path",
-            help="Music library path to watch"),
+            help="Music library path to watch"
+        ),
         make_option("--start",
             action="store_true",
             dest="start",
-            help="Start watching directory for changes"),
+            help="Start watching directory for changes"
+        ),
         make_option("--stop",
             action="store_true",
             dest="stop",
-            help="Stop watching directory for changes"),
-        )
+            help="Stop watching directory for changes"
+        ),
+    )
 
     def handle(self, *args, **options):
         if options["path"] is None:
@@ -93,6 +101,7 @@ class Command(BaseCommand):
             self.monitor.run()
 
     def shutdown(self, signal, action):
-        self.monitor.stop()
+        if self.monitor is not None:
+            self.monitor.stop()
         self.daemon.close()
         sys.exit(0)

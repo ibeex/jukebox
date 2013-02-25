@@ -26,17 +26,6 @@ General
 - Jukebox is available in english and german
 - Jukebox uses Facebook, Twitter and Github for authentication (see `django-social-auth <https://github.com/omab/django-social-auth>`_ for more authentication providers)
 
-Public Test
-=============
-
-There is a public test server of Democratic Jukebox to try it out. Please note that the icecast server is limited to 10 listeners.
-
-Web: http://jukebox.jensnistler.de
-
-Stream: http://jukebox.jensnistler.de:8000/stream
-
-Thanks to `Steffen Zieger <https://github.com/saz>`_ for providing and managing the server.
-
 Setup
 ==================
 
@@ -122,13 +111,14 @@ Dependencies
 
 ::
 
-    Django==1.3
+    Django==1.4.5
     mutagen==1.20
-    django-social-auth==0.6.0
-    djangorestframework==0.2.3
+    django-social-auth==0.7.20
+    djangorestframework==2.2.1
     python-shout==0.2
     python-daemon==1.6
-    pyinotify==0.9.1
+    pyinotify==0.9.4
+    simplejson==3.1.0
 
 License
 ========
@@ -176,3 +166,9 @@ Release Notes
 - Improved exception handling
 - Added rss for current song
 - Minor bug fixes
+
+0.3.2
+
+- Update dependencies
+- Fix authentication problems
+- Switch from inotify to watchdog
